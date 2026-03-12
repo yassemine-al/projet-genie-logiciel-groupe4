@@ -11,7 +11,7 @@ public class Contact {
     // Constructeur avec validation
     public Contact(Long id, String name, String email, String phone, String notes) {
         // on refuse de créer un contact sans nom
-        if (name == null || name.isBlank()) {
+        if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Erreur : Le nom du contact est obligatoire !");
         }
         
