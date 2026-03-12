@@ -1,55 +1,43 @@
 package addressBook.repository;
 
+import adressBook.entités.Contact;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import adressBook.entités.Contact; 
 
+/**
+ * Implémentation du Repository par le Membre D
+ */
 public class MemoryContact implements ContactRepository {
 
-    private final List<Contact> contacts = new ArrayList<>();
-
-    // Constructeur éviter les conflit vu que Yasmine en a mis dans le main en cas de test
-    public MemoryContact() {
-    }
-
-    // Ajouter pour éviter les conflit vu que Yasmine en a mis dans le main
-    public MemoryContact(String filePath) {
-        this();
-    }
+    // liste de stocker les données en mémoire
+    private List<Contact> contacts = new ArrayList<>();
 
     @Override
     public Contact save(Contact contact) {
-        // On n'ajoute pas si le contact est null
-        if (contact == null) return null;
-
-        // Éviter les doublons : si l'ID est déjà présent, on ne l'ajoute pas
-        if (contact.getId() != null && findById(contact.getId()).isPresent()) {
-            return contact; 
-        }
-
-        this.contacts.add(contact);
+        // on le supprime avant de rajouter la nouvelle version
+        this.findById(contact.getId()).ifPresent(c -> contacts.remove(c));
+        contacts.add(contact);
         return contact;
     }
 
     @Override
+    public List<Contact> findAll() {
+        // On retourne une copie pour éviter de modifier la liste originale par erreur ailleurs
+        return new ArrayList<>(contacts);
+    }
+
+    @Override
     public Optional<Contact> findById(Long id) {
-        // Si l'ID est null, on retourne un Optional vide au lieu de faire planter le stream
-        if (id == null) {
-            return Optional.empty();
-        }
-        
+        // On cherche le contact par son ID
         return contacts.stream()
-                .filter(c -> id.equals(c.getId()))
+                .filter(c -> c.getId().equals(id))
                 .findFirst();
     }
 
-    // Recherche par nom
-    public List<Contact> findByName(String name) {
-        if (name == null || name.isEmpty()) {
-            return new ArrayList<>();
-        }
-        return contacts.stream()
-                .filter(c -> c.getName().equalsIgnoreCase(name))
-                .toList();
+    @Override
+    public void delete(Long id) {
+        // Suppression par ID
+        contacts.removeIf(c -> c.getId().equals(id));
     }
+}
