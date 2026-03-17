@@ -6,9 +6,9 @@ public class Interaction {
     private Long id;
     private Date date;
     private String summary;
-    private String type;
+    private TypeInteraction type; 
 
-    public Interaction(Long id, Date date, String summary, String type) throws IllegalArgumentException {
+    public Interaction(Long id, Date date, String summary, TypeInteraction type) throws IllegalArgumentException {
         if (id == null) {
             throw new IllegalArgumentException("L'ID est obligatoire.");
         }
@@ -18,7 +18,8 @@ public class Interaction {
         if (summary == null || summary.trim().isEmpty()) {
             throw new IllegalArgumentException("Le résumé ne peut pas être vide.");
         }
-        if (type == null || type.trim().isEmpty()) {
+        
+        if (type == null) {
             throw new IllegalArgumentException("Le type est obligatoire.");
         }
 
@@ -40,7 +41,8 @@ public class Interaction {
         return summary;
     }
 
-    public String getType() {
+   
+    public TypeInteraction getType() {
         return type;
     }
 }
