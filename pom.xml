@@ -4,8 +4,10 @@
   <artifactId>projet-genie-logiciel-groupe4</artifactId>
   <version>0.0.1-SNAPSHOT</version>
 
-  <!-- C'EST ICI QU'ON DIT À MAVEN D'UTILISER JAVA 17 -->
   <properties>
+    <!-- C'EST ICI QU'ON DIT À MAVEN D'UTILISER JAVA 17 -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
   </properties>
@@ -48,6 +50,12 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
+
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
