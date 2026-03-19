@@ -33,15 +33,10 @@ class ContactRepositoryTest {
     // 1. Test "Round-trip basique"
     @Test
     void testRoundTripBasique() {
-        // ÉTAPE 1 : Préparation (avec le constructeur à 5 paramètres de ton collègue)
         Contact contact = new Contact(1L, "Dupont", "dupont@test.com", "0601020304", "Un super collègue"); 
-        
-        // ÉTAPE 2 : Action (Sauvegarde)
         repository.save(contact);
 
-        // ÉTAPE 3 : Vérification (Relecture)
         List<Contact> contactsEnregistres = repository.findAll();
-        
         assertEquals(1, contactsEnregistres.size(), "Il doit y avoir 1 contact dans la liste");
         assertEquals("Dupont", contactsEnregistres.get(0).getName(), "Le nom doit correspondre");
     }
@@ -49,10 +44,7 @@ class ContactRepositoryTest {
     // 2. Test "Fichier inexistant"
     @Test
     void testFichierInexistant() {
-        // ÉTAPE 1 : Action (On lit directement sans avoir créé de fichier)
         List<Contact> contacts = repository.findAll();
-
-        // ÉTAPE 2 : Vérification (Ça ne doit pas planter et renvoyer une liste vide)
         assertNotNull(contacts, "La liste ne doit pas être null");
         assertTrue(contacts.isEmpty(), "La liste doit être vide si le fichier n'existe pas");
     }
@@ -60,16 +52,45 @@ class ContactRepositoryTest {
     // 3. Test "Cas limite" (caractères spéciaux)
     @Test
     void testContactAvecCaracteresSpeciaux() {
-        // ÉTAPE 1 : Préparation avec des caractères complexes
         Contact contactBizarre = new Contact(2L, "O'Connor-García !@#", "test@bizarre.com", "+33-6-00", "Notes \n spéciales");
-        
-        // ÉTAPE 2 : Action
         repository.save(contactBizarre);
 
-        // ÉTAPE 3 : Vérification
         List<Contact> contacts = repository.findAll();
         assertEquals(1, contacts.size());
         assertEquals("O'Connor-García !@#", contacts.get(0).getName(), "Les caractères spéciaux doivent être bien lus");
     }
 
+    // 4. Test de la recherche par ID (NOUVEAU)
+    @Test
+    void testFindById() {
+        Contact contact = new Contact(3L, "Alice", "alice@test.com", "0612345678", "Amie");
+        repository.save(contact);
+
+        assertTrue(repository.findById(3L).isPresent(), "On doit trouver le contact avec l'ID 3");
+        assertFalse(repository.findById(99L).isPresent(), "On ne doit pas trouver l'ID 99");
+    }
+
+    // 5. Test de la suppression (NOUVEAU)
+    @Test
+    void testDelete() {
+        Contact contact = new Contact(4L, "Bob", "bob@test.com", "0687654321", "Collègue");
+        repository.save(contact);
+        
+        repository.delete(4L);
+
+        List<Contact> contacts = repository.findAll();
+        assertTrue(contacts.isEmpty(), "La liste doit être vide après la suppression");
+    }
+
+    // 6. Test de tous les Getters de l'entité Contact (NOUVEAU)
+    @Test
+    void testTousLesGetters() {
+        Contact contact = new Contact(5L, "Charlie", "charlie@test.com", "0700000000", "Notes de test");
+        
+        assertEquals(5L, contact.getId());
+        assertEquals("Charlie", contact.getName());
+        assertEquals("charlie@test.com", contact.getEmail());
+        assertEquals("0700000000", contact.getPhone());
+        assertEquals("Notes de test", contact.getNotes());
+    }
 }
