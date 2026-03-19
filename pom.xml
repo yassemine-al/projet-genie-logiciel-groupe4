@@ -48,8 +48,6 @@
   </dependencies>
 
   <build>
-    <sourceDirectory>projet</sourceDirectory>
-    
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
