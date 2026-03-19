@@ -3,7 +3,7 @@ package addressBook.repository;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import adressBook.entités.Contact; // Vérifie bien l'orthographe de ton package entités
+import adressBook.entités.Contact;
 import java.util.Optional;
 
 class MemoryContactTest {
