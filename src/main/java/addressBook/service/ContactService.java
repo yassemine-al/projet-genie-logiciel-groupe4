@@ -1,4 +1,4 @@
-package adressBook.service;
+package addressBook.service;
 
 import adressBook.entités.Contact;
 import addressBook.repository.ContactRepository;
