@@ -73,8 +73,7 @@
               <goal>report</goal>
             </goals>
           </execution>
-        </executions>
-        <execution>
+          <execution>
 			<id>check</id>
 			<goals>
 				<goal>check</goal>
@@ -93,6 +92,7 @@
 				</rules>
 			</configuration>
 		</execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
