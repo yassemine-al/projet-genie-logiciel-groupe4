@@ -28,4 +28,4 @@ public class Contact {
     public String getEmail() { return email; }
     public String getPhone() { return phone; }
     public String getNotes() { return notes; }
-}
+
