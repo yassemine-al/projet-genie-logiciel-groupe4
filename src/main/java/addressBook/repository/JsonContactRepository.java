@@ -3,7 +3,7 @@ package addressBook.repository;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import addressBook.entites.Contact;
+import addressBook.entites.Contact; 
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -34,7 +34,8 @@ public class JsonContactRepository implements ContactRepository {
             List<Contact> contacts = gson.fromJson(reader, listType);
             return contacts != null ? contacts : new ArrayList<>();
         } catch (IOException e) {
-            return new ArrayList<>();
+            // Vraie gestion d'erreur au lieu de renvoyer une liste vide en cachette
+            throw new RuntimeException("Erreur lors de la lecture du fichier JSON : " + filePath, e);
         }
     }
 
@@ -46,7 +47,8 @@ public class JsonContactRepository implements ContactRepository {
         try (Writer writer = new FileWriter(filePath)) {
             gson.toJson(contacts, writer);
         } catch (IOException e) {
-            e.printStackTrace();
+           
+            throw new RuntimeException("Impossible de sauvegarder le contact dans le fichier : " + filePath, e);
         }
         return contact;
     }
@@ -59,12 +61,16 @@ public class JsonContactRepository implements ContactRepository {
     @Override
     public void delete(Long id) {
         List<Contact> contacts = findAll();
-        contacts.removeIf(c -> c.getId().equals(id));
+        boolean isRemoved = contacts.removeIf(c -> c.getId().equals(id));
         
-        try (Writer writer = new FileWriter(filePath)) {
-            gson.toJson(contacts, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
+       
+        if (isRemoved) {
+            try (Writer writer = new FileWriter(filePath)) {
+                gson.toJson(contacts, writer);
+            } catch (IOException e) {
+        
+                throw new RuntimeException("Impossible de mettre à jour le fichier après suppression : " + filePath, e);
+            }
         }
     }
 }

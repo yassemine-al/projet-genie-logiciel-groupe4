@@ -8,7 +8,20 @@ public class Interaction {
     private String summary;
     private TypeInteraction type; 
 
-    public Interaction() {}
+    // Constructeur strict : on force à donner les infos dès la création
+    public Interaction(Long id, Date date, String summary, TypeInteraction type) {
+        if (summary == null || summary.isEmpty()) {
+            throw new IllegalArgumentException("Erreur : Le résumé est obligatoire !");
+        }
+        if (type == null) {
+            throw new IllegalArgumentException("Erreur : Le type d'interaction est obligatoire !");
+        }
+        
+        this.id = id;
+        this.date = date;
+        this.summary = summary;
+        this.type = type;
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
