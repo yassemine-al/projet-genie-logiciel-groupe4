@@ -3,6 +3,8 @@ package adressBook.entités;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
+import addressBook.entites.Contact;
+
 class ContactTest {
 
     // Cas nominal : création classique 

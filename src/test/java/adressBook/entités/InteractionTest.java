@@ -3,6 +3,8 @@ package adressBook.entités;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
+import addressBook.entites.Interaction;
+
 public class InteractionTest {
     @Test
     void testCreation_Nominal() {

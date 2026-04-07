@@ -8,8 +8,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import addressBook.entites.Interaction;
 import addressBook.repository.InteractionRepository;
-import adressBook.entités.Interaction;
 
 @ExtendWith(MockitoExtension.class)
 public class InteractionServiceTest {

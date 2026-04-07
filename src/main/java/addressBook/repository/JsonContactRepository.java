@@ -1,8 +1,9 @@
 package addressBook.repository;
 
-import adressBook.entités.Contact;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import addressBook.entites.Contact;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -10,13 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class MemoryContact implements ContactRepository {
+public class JsonContactRepository implements ContactRepository {
     
     private final String filePath;
     private final Gson gson;
 
     // Constructeur : on lui donne le nom du fichier dans lequel on veut sauvegarder
-    public MemoryContact(String filePath) {
+    public JsonContactRepository(String filePath) {
         this.filePath = filePath;
         this.gson = new Gson();
     }

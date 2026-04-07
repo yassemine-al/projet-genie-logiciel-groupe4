@@ -1,4 +1,4 @@
-package adressBook.entités;
+package addressBook.entites;
 
 import java.util.Date;
 
