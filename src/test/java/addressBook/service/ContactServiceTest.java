@@ -1,6 +1,6 @@
 package addressBook.service;
 
-import addressBook.entites.Contact;
+import addressBook.entities.Contact;
 import addressBook.repository.ContactRepository;
 
 import org.junit.jupiter.api.Test;

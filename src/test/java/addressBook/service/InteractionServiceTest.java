@@ -2,14 +2,18 @@ package addressBook.service;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.Date;
 import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import addressBook.entites.Interaction;
+import addressBook.entities.Interaction;
+import addressBook.entities.TypeInteraction;
 import addressBook.repository.InteractionRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,17 +27,19 @@ public class InteractionServiceTest {
 
     @Test
     void testSave_Nominal() {
-        Interaction inter = new Interaction();
-        inter.setSummary("Appel commercial");
+        
+        Interaction inter = new Interaction(1L, new Date(), "Appel commercial", TypeInteraction.values()[0]);
+        
         when(repository.save(any(Interaction.class))).thenReturn(inter);
         assertNotNull(service.saveInteraction(inter));
     }
 
     @Test
     void testSave_CasLimite_Exception() {
-        Interaction inter = new Interaction();
-        inter.setSummary("");
-        assertThrows(IllegalArgumentException.class, () -> service.saveInteraction(inter));
+        
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Interaction(1L, new Date(), "", TypeInteraction.values()[0]); // Résumé vide = erreur !
+        });
     }
 
     @Test

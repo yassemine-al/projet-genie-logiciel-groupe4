@@ -1,6 +1,6 @@
 package addressBook.service;
 
-import addressBook.entites.Contact;
+import addressBook.entities.Contact;
 import addressBook.repository.ContactRepository;
 
 import java.util.List;
@@ -27,7 +27,17 @@ public class ContactService {
         return contactRepository.findById(id);
     }
 
+    // Cherche tous les contacts dont le nom contient la chaîne demandée (sans tenir compte des majuscules)
+    public List<Contact> searchContactsByName(String name) {
+        if (name == null || name.isBlank()) {
+            return List.of(); // Retourne une liste vide si la recherche est nulle ou vide
+        }
+        return contactRepository.findAll().stream()
+                .filter(c -> c.getName().toLowerCase().contains(name.toLowerCase()))
+                .toList();
+    }
+
     public void deleteContact(Long id) {
         contactRepository.delete(id);
     }
-} 
+}

@@ -5,12 +5,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import addressBook.entites.Interaction;
-
+import addressBook.entities.Interaction;
+import addressBook.entities.TypeInteraction; 
+import java.util.Date; 
 import java.util.Optional;
 
 public class InteractionRepositoryTest {
-	
+    
     private InteractionRepository repository;
 
     @BeforeEach
@@ -20,8 +21,8 @@ public class InteractionRepositoryTest {
 
     @Test
     void testRoundTrip_Basique() {
-        Interaction inter = new Interaction();
-        inter.setSummary("Test");
+        
+        Interaction inter = new Interaction(1L, new Date(), "Test", TypeInteraction.values()[0]);
         Interaction saved = repository.save(inter);
         
         Optional<Interaction> found = repository.findById(saved.getId());
@@ -37,10 +38,9 @@ public class InteractionRepositoryTest {
 
     @Test
     void testSauvegardeCaracteresSpeciaux() {
-        // on teste un cas limite : un résumé avec plein de symboles et d'accents
-        Interaction nouvelleInteraction = new Interaction();
         String texteComplexe = "Appel à 14h30 avec l'équipe n°1 @Paris !! #urgent";
-        nouvelleInteraction.setSummary(texteComplexe);
+ 
+        Interaction nouvelleInteraction = new Interaction(2L, new Date(), texteComplexe, TypeInteraction.values()[0]);
         
         Interaction resultat = repository.save(nouvelleInteraction);
         

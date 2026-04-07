@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import addressBook.entites.Interaction;
+import addressBook.entities.Interaction;
 
 public class MemoryInteractionRepository implements InteractionRepository {
     private List<Interaction> interactions = new ArrayList<>();

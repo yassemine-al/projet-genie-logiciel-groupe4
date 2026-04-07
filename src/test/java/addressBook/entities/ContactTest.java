@@ -1,9 +1,9 @@
-package adressBook.entités;
+package addressBook.entities;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
-import addressBook.entites.Contact;
+import addressBook.entities.Contact;
 
 class ContactTest {
 

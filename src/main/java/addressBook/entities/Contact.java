@@ -1,4 +1,4 @@
-package addressBook.entites;
+package addressBook.entities;
 
 public class Contact {
     // Attributs privés 
@@ -28,4 +28,18 @@ public class Contact {
     public String getEmail() { return email; }
     public String getPhone() { return phone; }
     public String getNotes() { return notes; }
+
+    // Setters
+    public void setName(String name) { 
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Erreur : Le nom du contact est obligatoire !");
+        }
+        this.name = name; 
+    }
+    
+    public void setEmail(String email) { this.email = email; }
+    
+    public void setPhone(String phone) { this.phone = phone; }
+    
+    public void setNotes(String notes) { this.notes = notes; }
 }
