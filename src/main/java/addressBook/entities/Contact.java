@@ -1,4 +1,4 @@
-package addressBook.entites;
+package addressBook.entities;
 
 public class Contact {
     // Attributs privés 

@@ -3,7 +3,7 @@ package addressBook.repository;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import addressBook.entites.Contact; 
+import addressBook.entities.Contact;
 
 import java.io.*;
 import java.lang.reflect.Type;

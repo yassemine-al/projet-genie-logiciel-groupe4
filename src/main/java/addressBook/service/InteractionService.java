@@ -3,7 +3,7 @@ package addressBook.service;
 import java.util.List;
 import java.util.Optional;
 
-import addressBook.entites.Interaction;
+import addressBook.entities.Interaction;
 import addressBook.repository.InteractionRepository;
 
 public class InteractionService {

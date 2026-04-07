@@ -4,7 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import addressBook.entites.Contact;
+import addressBook.entities.Contact;
 
 import java.io.File;
 import java.util.List;

@@ -3,7 +3,7 @@ package addressBook.repository;
 import java.util.List;
 import java.util.Optional;
 
-import addressBook.entites.Contact;
+import addressBook.entities.Contact;
 
 public interface ContactRepository {
     Contact save(Contact contact);
