@@ -5,7 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import adressBook.entités.Interaction;
+import addressBook.entites.Interaction;
+
 import java.util.Optional;
 
 public class InteractionRepositoryTest {

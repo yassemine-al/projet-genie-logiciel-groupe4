@@ -2,8 +2,9 @@ package addressBook.service;
 
 import java.util.List;
 import java.util.Optional;
+
+import addressBook.entites.Interaction;
 import addressBook.repository.InteractionRepository;
-import adressBook.entités.Interaction;
 
 public class InteractionService {
     private final InteractionRepository repository;

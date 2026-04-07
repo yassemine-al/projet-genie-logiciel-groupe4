@@ -1,9 +1,10 @@
 package addressBook.repository;
 
-import adressBook.entités.Contact;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import addressBook.entites.Contact;
 
 import java.io.File;
 import java.util.List;
@@ -12,13 +13,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ContactRepositoryTest {
 
-    private MemoryContact repository;
+    private JsonContactRepository repository;
     private final String TEST_FILE = "test_contacts.json";
 
     @BeforeEach
     void setUp() {
         // Avant chaque test, on initialise le repository avec le fichier de test
-        repository = new MemoryContact(TEST_FILE);
+        repository = new JsonContactRepository(TEST_FILE);
     }
 
     @AfterEach

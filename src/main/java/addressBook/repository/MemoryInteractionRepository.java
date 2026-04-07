@@ -3,7 +3,8 @@ package addressBook.repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import adressBook.entités.Interaction;
+
+import addressBook.entites.Interaction;
 
 public class MemoryInteractionRepository implements InteractionRepository {
     private List<Interaction> interactions = new ArrayList<>();
