@@ -1,16 +1,17 @@
 package addressBook.entities;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Contact {
-    // Attributs privés 
     private Long id; 
     private String name;
     private String email;
     private String phone;
     private String notes;
+    private Set<Category> categories = new HashSet<>();
 
-    // Constructeur avec validation
     public Contact(Long id, String name, String email, String phone, String notes) {
-        // on refuse de créer un contact sans nom
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Erreur : Le nom du contact est obligatoire !");
         }
@@ -22,14 +23,28 @@ public class Contact {
         this.notes = notes;
     }
 
-    // Getters pour que les autres couches puissent lire les informations
+    public Set<Category> getCategories() { 
+        return categories; 
+    }
+
+    public void addCategory(Category category) {
+        if (category != null) {
+            this.categories.add(category);
+        }
+    }
+
+    public void removeCategory(Category category) {
+        this.categories.remove(category);
+    }
+
     public Long getId() { return id; }
     public String getName() { return name; }
     public String getEmail() { return email; }
     public String getPhone() { return phone; }
     public String getNotes() { return notes; }
 
-    // Setters
+    public void setId(Long id) { this.id = id; }
+
     public void setName(String name) { 
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Erreur : Le nom du contact est obligatoire !");
@@ -38,8 +53,6 @@ public class Contact {
     }
     
     public void setEmail(String email) { this.email = email; }
-    
     public void setPhone(String phone) { this.phone = phone; }
-    
     public void setNotes(String notes) { this.notes = notes; }
 }
