@@ -27,8 +27,10 @@ public class Contact {
     }
     public Long getAgentId() { return agentId; }
     public void setAgentId(Long agentId) { this.agentId = agentId; }
+
+    // --- LA COPIE DÉFENSIVE EST LÀ ! ---
     public Set<Category> getCategories() { 
-        return categories; 
+        return new HashSet<>(this.categories); // On renvoie une copie sécurisée !
     }
 
     public void addCategory(Category category) {

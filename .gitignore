@@ -1,3 +1,27 @@
-/target/
+# Build
+target/
+build/
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
 hs_err_pid*
+
+# Fichiers locaux de test
 test_local.json
+contacts.json
+
+# Secrets
+.env
+*.pem
+*.key
+secrets.properties
