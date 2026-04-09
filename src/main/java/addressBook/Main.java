@@ -7,133 +7,132 @@ import addressBook.service.*;
 import java.util.*;
 
 public class Main {
+    private static List<SaleAgent> listeAgents = new ArrayList<>();
+    private static SaleAgent agentConnecte = null;
+
+    static {
+        listeAgents.add(new SaleAgent(1L, "Admin", "admin123"));
+    }
+
     public static void main(String[] args) {
-        // --- 1. INITIALISATION DES SERVICES ---
         ContactRepository contactRepo = new JsonContactRepository("contacts.json");
         ContactService contactService = new ContactService(contactRepo);
-
-        InteractionRepository interactionRepo = new MemoryInteractionRepository();
-        InteractionService interactionService = new InteractionService(interactionRepo);
+        InteractionService interactionService = new InteractionService(new MemoryInteractionRepository());
 
         Scanner scanner = new Scanner(System.in);
-        boolean quitterApp = false;
+        
+        System.out.println("=== SYSTEME CRM CONSOLE ===");
+        while (agentConnecte == null) {
+            menuConnexion(scanner);
+        }
 
+        boolean quitterApp = false;
         while (!quitterApp) {
-            System.out.println("\n===========================================");
-            System.out.println("     SYSTEME CRM - GESTION GLOBALE       ");
-            System.out.println("===========================================");
-            System.out.println("1. 👤 Gérer les CONTACTS");
-            System.out.println("2. 📅 Gérer les INTERACTIONS");
-            System.out.println("3. ❌ Quitter l'application");
-            System.out.print("👉 Votre choix : ");
+            System.out.println("\n--- SESSION : " + agentConnecte.getUsername() + " ---");
+            System.out.println("1.Gérer les CONTACTS");
+            System.out.println("2.Gérer les INTERACTIONS");
+            System.out.println("3.Changer d'Agent");
+            System.out.println("4. Quitter");
+            System.out.print(" Choix : ");
 
             String choix = scanner.nextLine();
-
             switch (choix) {
-                case "1":
-                    menuContacts(contactService, scanner);
-                    break;
-                case "2":
-                    menuInteractions(interactionService, scanner);
-                    break;
-                case "3":
-                    quitterApp = true;
-                    System.out.println("👋 Fin du programme. Au revoir !");
-                    break;
-                default:
-                    System.out.println("⚠️ Choix invalide.");
+                case "1" -> menuContacts(contactService, scanner, agentConnecte);
+                case "2" -> menuInteractions(interactionService, scanner, contactService, agentConnecte);
+                case "3" -> { agentConnecte = null; while(agentConnecte == null) menuConnexion(scanner); }
+                case "4" -> quitterApp = true;
             }
         }
         scanner.close();
     }
 
     // ============================================================
-    // MODULE CONTACTS
+    // MENU CONTACTS 
     // ============================================================
-    private static void menuContacts(ContactService service, Scanner scanner) {
-        System.out.println("\n--- MENU CONTACTS ---");
-        System.out.println("1. Ajouter un contact");
-        System.out.println("2. Lister tous les contacts");
+    public static void menuContacts(ContactService contactService, Scanner scanner, SaleAgent agent) {
+        System.out.println("\n--- GESTION CONTACTS ---");
+        System.out.println("1. Ajouter");
+        System.out.println("2. Lister mes contacts");
+        System.out.println("3. Rechercher par nom");
+        System.out.println("4. Supprimer un contact");
         System.out.print("👉 Choix : ");
         String choix = scanner.nextLine();
 
-        if (choix.equals("1")) {
-            try {
-                System.out.print("ID : ");
-                Long id = Long.parseLong(scanner.nextLine());
-                System.out.print("Nom : ");
-                String nom = scanner.nextLine();
-                System.out.print("Email : ");
-                String email = scanner.nextLine();
-                System.out.print("Téléphone : ");
-                String tel = scanner.nextLine();
-                System.out.print("Notes : ");
-                String notes = scanner.nextLine();
-
-                Set<Category> cats = new HashSet<>();
-                boolean fini = false;
-                while (!fini) {
-                    System.out.println("Catégories : " + cats + " | 1.CLIENT 2.PROSPECT 3.AMI 4.FAMILLE 5.FINIR");
-                    System.out.print("👉 Choix : ");
-                    String catInput = scanner.nextLine();
-                    switch (catInput) {
-                        case "1": cats.add(Category.CLIENT); break;
-                        case "2": cats.add(Category.PROSPECT); break;
-                        case "3": cats.add(Category.AMI); break;
-                        case "4": cats.add(Category.FAMILLE); break;
-                        default: fini = true; break;
-                    }
-                }
-                service.addContact(id, nom, email, tel, notes, cats);
-                System.out.println("✅ Contact enregistré avec succès !");
-            } catch (Exception e) {
-                System.out.println("⚠️ Erreur : " + e.getMessage());
+        switch (choix) {
+            case "1" -> {
+                try {
+                    System.out.print("ID : "); Long id = Long.parseLong(scanner.nextLine());
+                    System.out.print("Nom : "); String nom = scanner.nextLine();
+                    contactService.addContact(id, nom, "email@test.com", "000", "", new HashSet<>(), agent.getId());
+                    System.out.println("Ajouté !");
+                } catch (Exception e) { System.out.println("Erreur : " + e.getMessage()); }
             }
-        } else if (choix.equals("2")) {
-            System.out.println("\n--- LISTE DES CONTACTS ---");
-            service.getAllContacts().forEach(c -> 
-                System.out.println("ID " + c.getId() + " : " + c.getName() + " | Cats: " + c.getCategories()));
+            case "2" -> {
+                System.out.println("\n--- MES CONTACTS ---");
+                contactService.getContactsByAgent(agent.getId()).forEach(c -> 
+                    System.out.println("[" + c.getId() + "] " + c.getName()));
+            }
+            case "3" -> {
+                System.out.print("Entrez le nom (ou une partie) à rechercher : ");
+                String recherche = scanner.nextLine();
+                List<Contact> resultats = contactService.searchContactsByName(recherche, agent.getId());
+                if (resultats.isEmpty()) {
+                    System.out.println(" Aucun contact trouvé pour '" + recherche + "'");
+                } else {
+                    System.out.println("Résultats :");
+                    resultats.forEach(c -> System.out.println("- " + c.getName() + " (ID: " + c.getId() + ")"));
+                }
+            }
+            case "4" -> {
+                try {
+                    System.out.print("Entrez l'ID du contact à supprimer : ");
+                    Long idSuppr = Long.parseLong(scanner.nextLine());
+                    
+                    // Vérification de sécurité : le contact appartient-il bien à l'agent ?
+                    Optional<Contact> cible = contactService.getContactById(idSuppr);
+                    if (cible.isPresent() && cible.get().getAgentId().equals(agent.getId())) {
+                        contactService.deleteContact(idSuppr);
+                        System.out.println(" Contact " + idSuppr + " supprimé.");
+                    } else {
+                        System.out.println(" Action impossible : Contact introuvable ou ne vous appartient pas.");
+                    }
+                } catch (Exception e) { System.out.println("Erreur : ID invalide."); }
+            }
         }
     }
 
-    // ============================================================
-    // MODULE INTERACTIONS
-    // ============================================================
-    private static void menuInteractions(InteractionService service, Scanner scanner) {
-        System.out.println("\n--- MENU INTERACTIONS ---");
-        System.out.println("1. Ajouter une interaction");
-        System.out.println("2. Lister les interactions");
-        System.out.print("👉 Choix : ");
-        String choix = scanner.nextLine();
 
-        if (choix.equals("1")) {
+    private static void menuConnexion(Scanner scanner) {
+        System.out.println("\n1. Connexion | 2. Créer Agent");
+        String c = scanner.nextLine();
+        if (c.equals("1")) {
+            System.out.print("Nom : "); String n = scanner.nextLine();
+            System.out.print("MDP : "); String m = scanner.nextLine();
+            listeAgents.stream().filter(a -> a.getUsername().equalsIgnoreCase(n) && a.checkPassword(m))
+                .findFirst().ifPresentOrElse(a -> agentConnecte = a, () -> System.out.println("Échec !"));
+        } else {
             try {
-                System.out.print("ID de l'interaction : ");
-                Long id = Long.parseLong(scanner.nextLine());
-                System.out.print("Résumé : ");
-                String resume = scanner.nextLine();
-                
-                System.out.println("Type : 1.APPEL | 2.EMAIL | 3.REUNION | 4.MESSAGE");
-                System.out.print("👉 Choix : ");
-                String typeInput = scanner.nextLine();
-                TypeInteraction type = switch(typeInput) {
-                    case "1" -> TypeInteraction.APPEL;
-                    case "2" -> TypeInteraction.EMAIL;
-                    case "3" -> TypeInteraction.REUNION;
-                    default -> TypeInteraction.MESSAGE;
-                };
+                System.out.print("ID : "); Long i = Long.parseLong(scanner.nextLine());
+                System.out.print("Nom : "); String n = scanner.nextLine();
+                System.out.print("MDP : "); String m = scanner.nextLine();
+                listeAgents.add(new SaleAgent(i, n, m));
+                System.out.println("Agent créé !");
+            } catch (Exception e) { System.out.println("Erreur creation."); }
+        }
+    }
 
-                // Création de l'interaction avec la date du jour
-                Interaction inter = new Interaction(id, new Date(), resume, type);
-                service.saveInteraction(inter);
-                System.out.println("✅ Interaction enregistrée !");
-            } catch (Exception e) {
-                System.out.println("⚠️ Erreur : " + e.getMessage());
-            }
-        } else if (choix.equals("2")) {
-            System.out.println("\n--- LISTE DES INTERACTIONS ---");
-            service.getAllInteractions().forEach(i -> 
-                System.out.println("[" + i.getType() + "] " + i.getDate() + " : " + i.getSummary()));
+    private static void menuInteractions(InteractionService service, Scanner scanner, ContactService contactService, SaleAgent agent) {
+        System.out.println("\n1. Ajouter Interaction | 2. Voir Historique");
+        String choix = scanner.nextLine();
+        if (choix.equals("1")) {
+            List<Contact> mesC = contactService.getContactsByAgent(agent.getId());
+            if (mesC.isEmpty()) { System.out.println("Pas de contacts !"); return; }
+            for (int i=0; i<mesC.size(); i++) System.out.println(i + ". " + mesC.get(i).getName());
+            int idx = Integer.parseInt(scanner.nextLine());
+            service.saveInteraction(new Interaction((long)(Math.random()*1000), new Date(), "Echange avec " + mesC.get(idx).getName(), TypeInteraction.APPEL));
+            System.out.println("Enregistré !");
+        } else {
+            service.getAllInteractions().forEach(i -> System.out.println(i.getSummary()));
         }
     }
 }

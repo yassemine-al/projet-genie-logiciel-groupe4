@@ -4,272 +4,184 @@ import addressBook.entities.*;
 import addressBook.repository.*;
 import addressBook.service.*;
 
-import com.formdev.flatlaf.FlatLightLaf; 
+import com.formdev.flatlaf.FlatLightLaf;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class GuiMain {
+    
+    // GESTION DES AGENTS 
+    private static List<SaleAgent> listeDesAgents = new ArrayList<>();
+    private static SaleAgent agentSession;
+    private static JLabel labelAgentStatus = new JLabel();
+
+    // création de l'admin par défaut au lancement
+    static {
+        listeDesAgents.add(new SaleAgent(1L, "Admin_Pro", "admin123"));
+    }
+
     public static void main(String[] args) {
-        
-        
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
-            
             UIManager.put("Button.arc", 10);
             UIManager.put("Component.arc", 10);
-            UIManager.put("TextComponent.arc", 10);
         } catch (Exception ex) {
-            System.err.println("Erreur d'initialisation du thème. Démarrage avec le thème par défaut.");
+            System.err.println("Erreur thème : " + ex.getMessage());
         }
 
-        // Swing : Lancer l'interface dans le "Event Dispatch Thread"
-        SwingUtilities.invokeLater(() -> {
-            System.out.println("Démarrage du programme...");
+        // forçage de l'Admin par défaut Si aucun agent n'est connecté
+        if (agentSession == null) {
+            agentSession = listeDesAgents.get(0);
+        }
 
-            // --- 1. INITIALISATION DES SERVICES ---
+        SwingUtilities.invokeLater(() -> {
+            // INITIALISATION DES SERVICES
             ContactRepository contactRepo = new JsonContactRepository("contacts.json");
             ContactService contactService = new ContactService(contactRepo);
+            InteractionService interactionService = new InteractionService(new MemoryInteractionRepository());
 
-            InteractionRepository interactionRepo = new MemoryInteractionRepository();
-            InteractionService interactionService = new InteractionService(interactionRepo);
-
-            // --- 2. FENÊTRE PRINCIPALE ---
-            JFrame fenetre = new JFrame("CRM Groupe 4 - Application Complète");
-            fenetre.setSize(900, 700); 
+           
+            JFrame fenetre = new JFrame("CRM Groupe 4 - Multi-Agents");
+            fenetre.setSize(1000, 800);
             fenetre.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            fenetre.setLocationRelativeTo(null); // Centre la fenêtre sur l'écran
+            fenetre.setLocationRelativeTo(null);
+            fenetre.setLayout(new BorderLayout());
 
+            // BARRE DE SESSION (HAUT) 
+            JPanel barreSession = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
+            barreSession.setBackground(new Color(230, 235, 245));
+            
+            updateAgentLabel();
+            
+            JButton btnGestionAgent = new JButton("🔐 Changer / Créer Agent");
+            btnGestionAgent.addActionListener(e -> {
+                ouvrirMenuAgents(fenetre, args);
+            });
+
+            barreSession.add(labelAgentStatus);
+            barreSession.add(btnGestionAgent);
 
             JTabbedPane onglets = new JTabbedPane();
-            onglets.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            onglets.addTab("👤 Mes Contacts", creerOngletContacts(contactService));
+            onglets.addTab("📅 Mes Interactions", creerOngletInteractions(interactionService, contactService));
 
-            // --- 3. CRÉATION DES ONGLETS ---
-            onglets.addTab("👤 Gérer les Contacts", creerOngletContacts(contactService));
-            onglets.addTab("📅 Gérer les Interactions", creerOngletInteractions(interactionService));
-
-            // --- 4. ASSEMBLAGE ET AFFICHAGE ---
-            fenetre.add(onglets);
+            fenetre.add(barreSession, BorderLayout.NORTH);
+            fenetre.add(onglets, BorderLayout.CENTER);
             fenetre.setVisible(true);
         });
     }
 
- // =========================================================================
-    // MODULE CONTACTS (Version avec Tableau)
-    // =========================================================================
+    /**
+     * Menu pour choisir un agent existant ou en créer un nouveau
+     */
+    private static void ouvrirMenuAgents(JFrame parent, String[] args) {
+        String[] options = {"Se connecter (Existant)", "Créer un nouvel Agent", "Annuler"};
+        int choix = JOptionPane.showOptionDialog(parent, 
+            "Que souhaitez-vous faire ?", "Gestion des Agents",
+            JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+
+        if (choix == 0) { // SE CONNECTER
+            JComboBox<String> combo = new JComboBox<>();
+            listeDesAgents.forEach(a -> combo.addItem(a.getUsername()));
+            
+            int res = JOptionPane.showConfirmDialog(parent, combo, "Sélectionnez votre compte :", JOptionPane.OK_CANCEL_OPTION);
+            if (res == JOptionPane.OK_OPTION) {
+                JPasswordField pf = new JPasswordField();
+                int mdpRes = JOptionPane.showConfirmDialog(parent, pf, "Mot de passe :", JOptionPane.OK_CANCEL_OPTION);
+                
+                if (mdpRes == JOptionPane.OK_OPTION) {
+                    SaleAgent selection = listeDesAgents.get(combo.getSelectedIndex());
+                    if (selection.checkPassword(new String(pf.getPassword()))) {
+                        agentSession = selection;
+                        parent.dispose();
+                        main(args);
+                    } else {
+                        JOptionPane.showMessageDialog(parent, "Mot de passe incorrect !");
+                    }
+                }
+            }
+        } 
+        else if (choix == 1) { // CRÉER UN NOUVEL AGENT
+            JTextField fId = new JTextField();
+            JTextField fNom = new JTextField();
+            JPasswordField fPass = new JPasswordField();
+            
+            Object[] message = { "ID :", fId, "Nom :", fNom, "Mot de passe :", fPass };
+            int res = JOptionPane.showConfirmDialog(parent, message, "Nouveau SaleAgent", JOptionPane.OK_CANCEL_OPTION);
+            
+            if (res == JOptionPane.OK_OPTION) {
+                try {
+                    SaleAgent n = new SaleAgent(Long.parseLong(fId.getText()), fNom.getText(), new String(fPass.getPassword()));
+                    listeDesAgents.add(n);
+                    JOptionPane.showMessageDialog(parent, "Agent créé ! Vous pouvez maintenant vous connecter.");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(parent, "Erreur : " + ex.getMessage());
+                }
+            }
+        }
+    }
+
+    private static void updateAgentLabel() {
+        labelAgentStatus.setText("<html><b>Session :</b> <font color='green'>" 
+            + agentSession.getUsername() + "</font> (ID: " + agentSession.getId() + ")</html>");
+    }
+
     private static JPanel creerOngletContacts(ContactService service) {
         JPanel panneau = new JPanel(new BorderLayout(10, 10));
         panneau.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        DefaultTableModel modele = new DefaultTableModel(new String[]{"ID", "Nom", "Email", "Catégories"}, 0);
+        JTable table = new JTable(modele);
 
-        // --- 1. CRÉATION DU TABLEAU ---
-        // On définit les colonnes de notre tableau
-        String[] colonnes = {"ID", "Nom", "Email", "Catégories"};
-        
-        // Le Modèle gère les données. On désactive l'édition manuelle des cases pour éviter les bugs
-        javax.swing.table.DefaultTableModel modeleTable = new javax.swing.table.DefaultTableModel(colonnes, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; 
-            }
+        Runnable rafraichir = () -> {
+            modele.setRowCount(0);
+            service.getContactsByAgent(agentSession.getId()).forEach(c -> 
+                modele.addRow(new Object[]{c.getId(), c.getName(), c.getEmail(), c.getCategories()}));
         };
-        
-        JTable tableContacts = new JTable(modeleTable);
-        tableContacts.setFillsViewportHeight(true); // Remplit tout l'espace
-        tableContacts.setRowHeight(25); // Des lignes un peu plus hautes pour aérer
-        tableContacts.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 12)); // En-têtes en gras
-        
-        JScrollPane scrollPane = new JScrollPane(tableContacts);
 
-        // --- 2. BOUTON RAFRAÎCHIR ---
-        JButton boutonCharger = new JButton("🔄 Rafraîchir la liste des contacts");
-        boutonCharger.putClientProperty("JButton.buttonType", "default");
-        boutonCharger.addActionListener(e -> {
-            // On vide le tableau avant de le remplir
-            modeleTable.setRowCount(0); 
-            
-            List<Contact> contacts = service.getAllContacts();
-            for (Contact c : contacts) {
-                // On prépare une ligne avec les infos du contact
-                Object[] ligne = {
-                    c.getId(),
-                    c.getName(),
-                    c.getEmail() != null ? c.getEmail() : "",
-                    c.getCategories().toString()
-                };
-                // On ajoute la ligne au tableau
-                modeleTable.addRow(ligne);
-            }
-        });
-
-        // --- 3. FORMULAIRE D'AJOUT ---
-        JPanel formulaire = new JPanel(new GridLayout(4, 1, 10, 10));
-        formulaire.setBorder(BorderFactory.createTitledBorder("➕ Ajouter un contact"));
-
-        JPanel ligne1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        JTextField champId = new JTextField(5);
-        JTextField champNom = new JTextField(15);
-        ligne1.add(new JLabel("ID:")); ligne1.add(champId);
-        ligne1.add(new JLabel("Nom:")); ligne1.add(champNom);
-
-        JPanel ligne2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        JTextField champEmail = new JTextField(15);
-        JTextField champTel = new JTextField(10);
-        ligne2.add(new JLabel("Email:")); ligne2.add(champEmail);
-        ligne2.add(new JLabel("Tél:")); ligne2.add(champTel);
-
-        JPanel ligne3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        JCheckBox chkClient = new JCheckBox("CLIENT");
-        JCheckBox chkProspect = new JCheckBox("PROSPECT");
-        JCheckBox chkAmi = new JCheckBox("AMI");
-        JCheckBox chkFamille = new JCheckBox("FAMILLE");
-        ligne3.add(new JLabel("Catégories: "));
-        ligne3.add(chkClient); ligne3.add(chkProspect); ligne3.add(chkAmi); ligne3.add(chkFamille);
-
-        JButton boutonAjouter = new JButton("✅ Enregistrer le contact");
-        boutonAjouter.addActionListener(e -> {
+        // Formulaire d'ajout
+        JPanel form = new JPanel(new FlowLayout());
+        JTextField fId = new JTextField(3); JTextField fNom = new JTextField(10);
+        JButton btnAdd = new JButton("Ajouter Contact");
+        btnAdd.addActionListener(e -> {
             try {
-                Set<Category> categories = new HashSet<>();
-                if (chkClient.isSelected()) categories.add(Category.CLIENT);
-                if (chkProspect.isSelected()) categories.add(Category.PROSPECT);
-                if (chkAmi.isSelected()) categories.add(Category.AMI);
-                if (chkFamille.isSelected()) categories.add(Category.FAMILLE);
-
-                service.addContact(Long.parseLong(champId.getText()), champNom.getText(), 
-                                   champEmail.getText(), champTel.getText(), "", categories);
-                
-                JOptionPane.showMessageDialog(null, "Contact ajouté !");
-                champId.setText(""); champNom.setText(""); champEmail.setText(""); champTel.setText("");
-                chkClient.setSelected(false); chkProspect.setSelected(false); chkAmi.setSelected(false); chkFamille.setSelected(false);
-                
-                // On simule un clic sur le bouton rafraîchir pour mettre à jour le tableau automatiquement !
-                boutonCharger.doClick();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, "Erreur (L'ID doit être un nombre valide et le nom est obligatoire)", "Erreur", JOptionPane.ERROR_MESSAGE);
-            }
+                service.addContact(Long.parseLong(fId.getText()), fNom.getText(), "test@mail.com", "000", "", new HashSet<>(), agentSession.getId());
+                rafraichir.run();
+            } catch (Exception ex) { JOptionPane.showMessageDialog(null, ex.getMessage()); }
         });
+        form.add(new JLabel("ID:")); form.add(fId); form.add(new JLabel("Nom:")); form.add(fNom); form.add(btnAdd);
 
-        formulaire.add(ligne1); formulaire.add(ligne2); formulaire.add(ligne3); formulaire.add(boutonAjouter);
-        
-        // --- 4. ASSEMBLAGE ---
-        panneau.add(boutonCharger, BorderLayout.NORTH);
-        panneau.add(scrollPane, BorderLayout.CENTER);
-        panneau.add(formulaire, BorderLayout.SOUTH);
-
-        // On lance un chargement initial pour afficher les données dès l'ouverture
-        boutonCharger.doClick();
-
+        panneau.add(new JScrollPane(table), BorderLayout.CENTER);
+        panneau.add(form, BorderLayout.SOUTH);
+        rafraichir.run();
         return panneau;
     }
 
- // =========================================================================
-    // MODULE INTERACTIONS (Version avec Tableau et erreurs propres)
-    // =========================================================================
-    private static JPanel creerOngletInteractions(InteractionService service) {
+    private static JPanel creerOngletInteractions(InteractionService service, ContactService contactService) {
         JPanel panneau = new JPanel(new BorderLayout(10, 10));
         panneau.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        DefaultTableModel modele = new DefaultTableModel(new String[]{"ID", "Résumé"}, 0);
+        JTable table = new JTable(modele);
+        
+        JComboBox<String> combo = new JComboBox<>();
+        contactService.getContactsByAgent(agentSession.getId()).forEach(c -> combo.addItem(c.getName()));
 
-        // --- 1. CRÉATION DU TABLEAU ---
-        String[] colonnes = {"ID", "Type", "Date", "Résumé"};
-        javax.swing.table.DefaultTableModel modeleTable = new javax.swing.table.DefaultTableModel(colonnes, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Empêche la modification manuelle des cases
-            }
-        };
-
-        JTable tableInteractions = new JTable(modeleTable);
-        tableInteractions.setFillsViewportHeight(true);
-        tableInteractions.setRowHeight(25);
-        tableInteractions.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 12));
-        JScrollPane scrollPane = new JScrollPane(tableInteractions);
-
-        // Petit bonus pro : Un formateur pour afficher la date joliment
-        java.text.SimpleDateFormat formateurDate = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
-
-        // --- 2. BOUTON RAFRAÎCHIR ---
-        JButton boutonCharger = new JButton("🔄 Rafraîchir la liste des interactions");
-        boutonCharger.putClientProperty("JButton.buttonType", "default");
-        boutonCharger.addActionListener(e -> {
-            modeleTable.setRowCount(0); // On vide le tableau
-            List<Interaction> inters = service.getAllInteractions();
-            for (Interaction i : inters) {
-                Object[] ligne = {
-                    i.getId(),
-                    i.getType(),
-                    i.getDate() != null ? formateurDate.format(i.getDate()) : "",
-                    i.getSummary()
-                };
-                modeleTable.addRow(ligne);
-            }
+        JButton btn = new JButton("Enregistrer Interaction");
+        btn.addActionListener(e -> {
+            if(combo.getSelectedItem() == null) return;
+            Interaction i = new Interaction((long)(Math.random()*1000), new Date(), "Echange avec " + combo.getSelectedItem(), TypeInteraction.APPEL);
+            service.saveInteraction(i);
+            modele.addRow(new Object[]{i.getId(), i.getSummary()});
         });
 
-        // --- 3. FORMULAIRE D'AJOUT ---
-        JPanel formulaire = new JPanel(new GridLayout(3, 1, 10, 10));
-        formulaire.setBorder(BorderFactory.createTitledBorder("➕ Ajouter une interaction"));
-
-        JPanel ligne1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        JTextField champId = new JTextField(5);
-        JTextField champResume = new JTextField(25);
-        ligne1.add(new JLabel("ID Interaction:")); ligne1.add(champId);
-        ligne1.add(new JLabel("Résumé:")); ligne1.add(champResume);
-
-        JPanel ligne2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        JComboBox<TypeInteraction> comboType = new JComboBox<>(TypeInteraction.values());
-        ligne2.add(new JLabel("Type d'échange :")); ligne2.add(comboType);
-
-        JButton boutonAjouter = new JButton("✅ Enregistrer l'interaction");
-        boutonAjouter.addActionListener(e -> {
-            
-            // --- VALIDATION PROPRE AVANT LE TRAITEMENT ---
-            String idTexte = champId.getText().trim();
-            String resumeTexte = champResume.getText().trim();
-
-            if (idTexte.isEmpty() || resumeTexte.isEmpty()) {
-                // Avertissement propre sans panique (icône jaune)
-                JOptionPane.showMessageDialog(null, "Veuillez remplir l'ID et le Résumé avant d'enregistrer.", "Champs manquants", JOptionPane.WARNING_MESSAGE);
-                return; // On arrête l'exécution de la méthode ici
-            }
-
-            try {
-                // Si on arrive ici, c'est que les champs ne sont pas vides
-                Long id = Long.parseLong(idTexte); 
-                
-                Interaction inter = new Interaction(
-                    id, 
-                    new Date(), 
-                    resumeTexte, 
-                    (TypeInteraction) comboType.getSelectedItem()
-                );
-                service.saveInteraction(inter);
-                
-                JOptionPane.showMessageDialog(null, "Interaction ajoutée avec succès !", "Succès", JOptionPane.INFORMATION_MESSAGE);
-                champId.setText(""); champResume.setText("");
-                
-                // Rafraîchissement auto du tableau
-                boutonCharger.doClick(); 
-                
-            } catch (NumberFormatException ex) {
-                // Si l'utilisateur a tapé "ABC" au lieu de "1" dans l'ID
-                JOptionPane.showMessageDialog(null, "L'ID doit être un nombre valide (ex: 1, 2, 3...).", "Erreur de format", JOptionPane.ERROR_MESSAGE);
-            } catch (IllegalArgumentException ex) {
-                // Si le constructeur de Interaction râle (ce qu'on a codé à la mission 3 !)
-                JOptionPane.showMessageDialog(null, ex.getMessage(), "Erreur métier", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        formulaire.add(ligne1); formulaire.add(ligne2); formulaire.add(boutonAjouter);
-
-        // --- 4. ASSEMBLAGE ---
-        panneau.add(boutonCharger, BorderLayout.NORTH);
-        panneau.add(scrollPane, BorderLayout.CENTER);
-        panneau.add(formulaire, BorderLayout.SOUTH);
-
-        // Chargement initial automatique
-        boutonCharger.doClick();
-
+        panneau.add(new JScrollPane(table), BorderLayout.CENTER);
+        JPanel p = new JPanel(); p.add(new JLabel("Contact :")); p.add(combo); p.add(btn);
+        panneau.add(p, BorderLayout.SOUTH);
         return panneau;
     }
 }

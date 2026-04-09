@@ -9,20 +9,24 @@ public class Contact {
     private String email;
     private String phone;
     private String notes;
+    private Long agentId;
     private Set<Category> categories = new HashSet<>();
-
-    public Contact(Long id, String name, String email, String phone, String notes) {
+    public Contact(Long id, String name, String email, String phone, String notes,Long agentId) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Erreur : Le nom du contact est obligatoire !");
         }
-        
+        if (agentId == null) {
+            throw new IllegalArgumentException("Erreur : L'ID de l'agent est obligatoire !");
+        }
         this.id = id;
         this.name = name;
         this.email = email;
         this.phone = phone;
         this.notes = notes;
+        this.agentId=agentId;
     }
-
+    public Long getAgentId() { return agentId; }
+    public void setAgentId(Long agentId) { this.agentId = agentId; }
     public Set<Category> getCategories() { 
         return categories; 
     }

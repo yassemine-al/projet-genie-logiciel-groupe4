@@ -3,14 +3,13 @@ package addressBook.entities;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
-import addressBook.entities.Contact;
-
 class ContactTest {
 
-    // Cas nominal : création classique 
+    // Cas nominal : création classique
     @Test
     void shouldCreateValidContact() {
-        Contact contact = new Contact(1L, "Yasmine", "yasmine@mail.com", "0606060606", "Notes");
+        // Ajout de "1L" pour l'agentId
+        Contact contact = new Contact(1L, "Yasmine", "yasmine@mail.com", "0606060606", "Notes", 1L);
         assertNotNull(contact);
         assertEquals("Yasmine", contact.getName());
     }
@@ -19,16 +18,16 @@ class ContactTest {
     @Test
     void shouldThrowExceptionWhenNameIsEmpty() {
         assertThrows(IllegalArgumentException.class, () -> {
-            new Contact(1L, "", "mail@test.com", "0101", "Notes");
+            new Contact(1L, "", "mail@test.com", "0101", "Notes", 1L);
         });
     }
 
-    // Règle métier : nom null obligatoire 
+    // Règle métier : agentId null obligatoire 
     @Test
-    void shouldThrowExceptionWhenNameIsNull() {
+    void shouldThrowExceptionWhenAgentIdIsNull() {
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            new Contact(1L, null, "mail@test.com", "0101", "Notes");
+            new Contact(1L, "Yasmine", "mail@test.com", "0101", "Notes", null);
         });
-        assertEquals("Erreur : Le nom du contact est obligatoire !", exception.getMessage());
+        assertEquals("Erreur : L'ID de l'agent est obligatoire !", exception.getMessage());
     }
 }
