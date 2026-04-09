@@ -1,4 +1,4 @@
-package adressBook.entités;
+package addressBook.entities;
 
 public enum TypeInteraction {
     APPEL,

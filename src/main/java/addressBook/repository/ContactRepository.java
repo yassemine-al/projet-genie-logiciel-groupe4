@@ -1,8 +1,9 @@
 package addressBook.repository;
 
-import adressBook.entités.Contact;
 import java.util.List;
 import java.util.Optional;
+
+import addressBook.entities.Contact;
 
 public interface ContactRepository {
     Contact save(Contact contact);
