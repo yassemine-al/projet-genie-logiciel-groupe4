@@ -4,6 +4,7 @@ import addressBook.entities.*;
 import addressBook.repository.*;
 import addressBook.service.*;
 
+import com.formdev.flatlaf.FlatLightLaf; 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Date;
@@ -13,79 +14,113 @@ import java.util.Set;
 
 public class GuiMain {
     public static void main(String[] args) {
-        System.out.println("Démarrage du programme...");
+        
+        
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+            
+            UIManager.put("Button.arc", 10);
+            UIManager.put("Component.arc", 10);
+            UIManager.put("TextComponent.arc", 10);
+        } catch (Exception ex) {
+            System.err.println("Erreur d'initialisation du thème. Démarrage avec le thème par défaut.");
+        }
 
-        // --- 1. INITIALISATION DES SERVICES ---
-        ContactRepository contactRepo = new JsonContactRepository("contacts.json");
-        ContactService contactService = new ContactService(contactRepo);
+        // Swing : Lancer l'interface dans le "Event Dispatch Thread"
+        SwingUtilities.invokeLater(() -> {
+            System.out.println("Démarrage du programme...");
 
-        InteractionRepository interactionRepo = new MemoryInteractionRepository();
-        InteractionService interactionService = new InteractionService(interactionRepo);
+            // --- 1. INITIALISATION DES SERVICES ---
+            ContactRepository contactRepo = new JsonContactRepository("contacts.json");
+            ContactService contactService = new ContactService(contactRepo);
 
-        System.out.println("Services initialisés ! Création de la fenêtre...");
+            InteractionRepository interactionRepo = new MemoryInteractionRepository();
+            InteractionService interactionService = new InteractionService(interactionRepo);
 
-        // --- 2. FENÊTRE PRINCIPALE ---
-        JFrame fenetre = new JFrame("CRM Groupe 4 - Application Complète");
-        fenetre.setSize(800, 600);
-        fenetre.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        fenetre.setLocationRelativeTo(null);
+            // --- 2. FENÊTRE PRINCIPALE ---
+            JFrame fenetre = new JFrame("CRM Groupe 4 - Application Complète");
+            fenetre.setSize(900, 700); 
+            fenetre.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            fenetre.setLocationRelativeTo(null); // Centre la fenêtre sur l'écran
 
-        // Création du gestionnaire d'onglets
-        JTabbedPane onglets = new JTabbedPane();
 
-        // --- 3. CRÉATION DES ONGLETS ---
-        onglets.addTab("👤 Gérer les Contacts", creerOngletContacts(contactService));
-        onglets.addTab("📅 Gérer les Interactions", creerOngletInteractions(interactionService));
+            JTabbedPane onglets = new JTabbedPane();
+            onglets.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // --- 4. ASSEMBLAGE ET AFFICHAGE ---
-        fenetre.add(onglets);
-        fenetre.setVisible(true);
+            // --- 3. CRÉATION DES ONGLETS ---
+            onglets.addTab("👤 Gérer les Contacts", creerOngletContacts(contactService));
+            onglets.addTab("📅 Gérer les Interactions", creerOngletInteractions(interactionService));
 
-        System.out.println("Fenêtre affichée avec succès !");
+            // --- 4. ASSEMBLAGE ET AFFICHAGE ---
+            fenetre.add(onglets);
+            fenetre.setVisible(true);
+        });
     }
 
-    // =========================================================================
-    // MODULE CONTACTS
+ // =========================================================================
+    // MODULE CONTACTS (Version avec Tableau)
     // =========================================================================
     private static JPanel creerOngletContacts(ContactService service) {
-        JPanel panneau = new JPanel(new BorderLayout());
+        JPanel panneau = new JPanel(new BorderLayout(10, 10));
+        panneau.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JTextArea zoneAffichage = new JTextArea();
-        zoneAffichage.setEditable(false);
-        zoneAffichage.setFont(new Font("Monospaced", Font.PLAIN, 14));
-        JScrollPane scrollPane = new JScrollPane(zoneAffichage);
+        // --- 1. CRÉATION DU TABLEAU ---
+        // On définit les colonnes de notre tableau
+        String[] colonnes = {"ID", "Nom", "Email", "Catégories"};
+        
+        // Le Modèle gère les données. On désactive l'édition manuelle des cases pour éviter les bugs
+        javax.swing.table.DefaultTableModel modeleTable = new javax.swing.table.DefaultTableModel(colonnes, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; 
+            }
+        };
+        
+        JTable tableContacts = new JTable(modeleTable);
+        tableContacts.setFillsViewportHeight(true); // Remplit tout l'espace
+        tableContacts.setRowHeight(25); // Des lignes un peu plus hautes pour aérer
+        tableContacts.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 12)); // En-têtes en gras
+        
+        JScrollPane scrollPane = new JScrollPane(tableContacts);
 
+        // --- 2. BOUTON RAFRAÎCHIR ---
         JButton boutonCharger = new JButton("🔄 Rafraîchir la liste des contacts");
+        boutonCharger.putClientProperty("JButton.buttonType", "default");
         boutonCharger.addActionListener(e -> {
-            zoneAffichage.setText("");
+            // On vide le tableau avant de le remplir
+            modeleTable.setRowCount(0); 
+            
             List<Contact> contacts = service.getAllContacts();
-            if (contacts.isEmpty()) {
-                zoneAffichage.append("Aucun contact trouvé.\n");
-            } else {
-                for (Contact c : contacts) {
-                    zoneAffichage.append("👤 " + c.getName() + " (ID: " + c.getId() + ") | Email: " + c.getEmail() + "\n");
-                    zoneAffichage.append("   Catégories : " + c.getCategories() + "\n");
-                    zoneAffichage.append("--------------------------------------------------\n");
-                }
+            for (Contact c : contacts) {
+                // On prépare une ligne avec les infos du contact
+                Object[] ligne = {
+                    c.getId(),
+                    c.getName(),
+                    c.getEmail() != null ? c.getEmail() : "",
+                    c.getCategories().toString()
+                };
+                // On ajoute la ligne au tableau
+                modeleTable.addRow(ligne);
             }
         });
 
-        JPanel formulaire = new JPanel(new GridLayout(4, 1));
+        // --- 3. FORMULAIRE D'AJOUT ---
+        JPanel formulaire = new JPanel(new GridLayout(4, 1, 10, 10));
         formulaire.setBorder(BorderFactory.createTitledBorder("➕ Ajouter un contact"));
 
-        JPanel ligne1 = new JPanel();
+        JPanel ligne1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         JTextField champId = new JTextField(5);
         JTextField champNom = new JTextField(15);
         ligne1.add(new JLabel("ID:")); ligne1.add(champId);
         ligne1.add(new JLabel("Nom:")); ligne1.add(champNom);
 
-        JPanel ligne2 = new JPanel();
+        JPanel ligne2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         JTextField champEmail = new JTextField(15);
         JTextField champTel = new JTextField(10);
         ligne2.add(new JLabel("Email:")); ligne2.add(champEmail);
         ligne2.add(new JLabel("Tél:")); ligne2.add(champTel);
 
-        JPanel ligne3 = new JPanel();
+        JPanel ligne3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         JCheckBox chkClient = new JCheckBox("CLIENT");
         JCheckBox chkProspect = new JCheckBox("PROSPECT");
         JCheckBox chkAmi = new JCheckBox("AMI");
@@ -108,84 +143,132 @@ public class GuiMain {
                 JOptionPane.showMessageDialog(null, "Contact ajouté !");
                 champId.setText(""); champNom.setText(""); champEmail.setText(""); champTel.setText("");
                 chkClient.setSelected(false); chkProspect.setSelected(false); chkAmi.setSelected(false); chkFamille.setSelected(false);
+                
+                // On simule un clic sur le bouton rafraîchir pour mettre à jour le tableau automatiquement !
                 boutonCharger.doClick();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, "Erreur (L'ID doit être un nombre)", "Erreur", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Erreur (L'ID doit être un nombre valide et le nom est obligatoire)", "Erreur", JOptionPane.ERROR_MESSAGE);
             }
         });
 
         formulaire.add(ligne1); formulaire.add(ligne2); formulaire.add(ligne3); formulaire.add(boutonAjouter);
         
+        // --- 4. ASSEMBLAGE ---
         panneau.add(boutonCharger, BorderLayout.NORTH);
         panneau.add(scrollPane, BorderLayout.CENTER);
         panneau.add(formulaire, BorderLayout.SOUTH);
 
+        // On lance un chargement initial pour afficher les données dès l'ouverture
+        boutonCharger.doClick();
+
         return panneau;
     }
 
-    // =========================================================================
-    // MODULE INTERACTIONS
+ // =========================================================================
+    // MODULE INTERACTIONS (Version avec Tableau et erreurs propres)
     // =========================================================================
     private static JPanel creerOngletInteractions(InteractionService service) {
-        JPanel panneau = new JPanel(new BorderLayout());
+        JPanel panneau = new JPanel(new BorderLayout(10, 10));
+        panneau.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JTextArea zoneAffichage = new JTextArea();
-        zoneAffichage.setEditable(false);
-        zoneAffichage.setFont(new Font("Monospaced", Font.PLAIN, 14));
-        JScrollPane scrollPane = new JScrollPane(zoneAffichage);
+        // --- 1. CRÉATION DU TABLEAU ---
+        String[] colonnes = {"ID", "Type", "Date", "Résumé"};
+        javax.swing.table.DefaultTableModel modeleTable = new javax.swing.table.DefaultTableModel(colonnes, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Empêche la modification manuelle des cases
+            }
+        };
 
+        JTable tableInteractions = new JTable(modeleTable);
+        tableInteractions.setFillsViewportHeight(true);
+        tableInteractions.setRowHeight(25);
+        tableInteractions.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 12));
+        JScrollPane scrollPane = new JScrollPane(tableInteractions);
+
+        // Petit bonus pro : Un formateur pour afficher la date joliment
+        java.text.SimpleDateFormat formateurDate = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
+
+        // --- 2. BOUTON RAFRAÎCHIR ---
         JButton boutonCharger = new JButton("🔄 Rafraîchir la liste des interactions");
+        boutonCharger.putClientProperty("JButton.buttonType", "default");
         boutonCharger.addActionListener(e -> {
-            zoneAffichage.setText("");
+            modeleTable.setRowCount(0); // On vide le tableau
             List<Interaction> inters = service.getAllInteractions();
-            if (inters.isEmpty()) {
-                zoneAffichage.append("Aucune interaction trouvée.\n");
-            } else {
-                for (Interaction i : inters) {
-                    zoneAffichage.append("📅 [" + i.getType() + "] ID: " + i.getId() + " - Date: " + i.getDate() + "\n");
-                    zoneAffichage.append("   Résumé : " + i.getSummary() + "\n");
-                    zoneAffichage.append("--------------------------------------------------\n");
-                }
+            for (Interaction i : inters) {
+                Object[] ligne = {
+                    i.getId(),
+                    i.getType(),
+                    i.getDate() != null ? formateurDate.format(i.getDate()) : "",
+                    i.getSummary()
+                };
+                modeleTable.addRow(ligne);
             }
         });
 
-        JPanel formulaire = new JPanel(new GridLayout(3, 1));
+        // --- 3. FORMULAIRE D'AJOUT ---
+        JPanel formulaire = new JPanel(new GridLayout(3, 1, 10, 10));
         formulaire.setBorder(BorderFactory.createTitledBorder("➕ Ajouter une interaction"));
 
-        JPanel ligne1 = new JPanel();
+        JPanel ligne1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         JTextField champId = new JTextField(5);
         JTextField champResume = new JTextField(25);
         ligne1.add(new JLabel("ID Interaction:")); ligne1.add(champId);
         ligne1.add(new JLabel("Résumé:")); ligne1.add(champResume);
 
-        JPanel ligne2 = new JPanel();
+        JPanel ligne2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         JComboBox<TypeInteraction> comboType = new JComboBox<>(TypeInteraction.values());
         ligne2.add(new JLabel("Type d'échange :")); ligne2.add(comboType);
 
         JButton boutonAjouter = new JButton("✅ Enregistrer l'interaction");
         boutonAjouter.addActionListener(e -> {
+            
+            // --- VALIDATION PROPRE AVANT LE TRAITEMENT ---
+            String idTexte = champId.getText().trim();
+            String resumeTexte = champResume.getText().trim();
+
+            if (idTexte.isEmpty() || resumeTexte.isEmpty()) {
+                // Avertissement propre sans panique (icône jaune)
+                JOptionPane.showMessageDialog(null, "Veuillez remplir l'ID et le Résumé avant d'enregistrer.", "Champs manquants", JOptionPane.WARNING_MESSAGE);
+                return; // On arrête l'exécution de la méthode ici
+            }
+
             try {
+                // Si on arrive ici, c'est que les champs ne sont pas vides
+                Long id = Long.parseLong(idTexte); 
+                
                 Interaction inter = new Interaction(
-                    Long.parseLong(champId.getText()), 
+                    id, 
                     new Date(), 
-                    champResume.getText(), 
+                    resumeTexte, 
                     (TypeInteraction) comboType.getSelectedItem()
                 );
                 service.saveInteraction(inter);
                 
-                JOptionPane.showMessageDialog(null, "Interaction ajoutée !");
-                champId.setText(""); champResume.setText(""); // Corrigé ici
-                boutonCharger.doClick();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, "Erreur de saisie : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Interaction ajoutée avec succès !", "Succès", JOptionPane.INFORMATION_MESSAGE);
+                champId.setText(""); champResume.setText("");
+                
+                // Rafraîchissement auto du tableau
+                boutonCharger.doClick(); 
+                
+            } catch (NumberFormatException ex) {
+                // Si l'utilisateur a tapé "ABC" au lieu de "1" dans l'ID
+                JOptionPane.showMessageDialog(null, "L'ID doit être un nombre valide (ex: 1, 2, 3...).", "Erreur de format", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                // Si le constructeur de Interaction râle (ce qu'on a codé à la mission 3 !)
+                JOptionPane.showMessageDialog(null, ex.getMessage(), "Erreur métier", JOptionPane.ERROR_MESSAGE);
             }
         });
 
         formulaire.add(ligne1); formulaire.add(ligne2); formulaire.add(boutonAjouter);
 
+        // --- 4. ASSEMBLAGE ---
         panneau.add(boutonCharger, BorderLayout.NORTH);
         panneau.add(scrollPane, BorderLayout.CENTER);
         panneau.add(formulaire, BorderLayout.SOUTH);
+
+        // Chargement initial automatique
+        boutonCharger.doClick();
 
         return panneau;
     }
