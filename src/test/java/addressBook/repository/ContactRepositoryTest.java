@@ -27,7 +27,10 @@ class ContactRepositoryTest {
         // Après chaque test, on supprime le fichier pour repartir à zéro
         File file = new File(TEST_FILE);
         if (file.exists()) {
-            file.delete();
+            boolean estSupprime = file.delete(); // On récupère le fameux booléen !
+            if (!estSupprime) {
+                file.deleteOnExit(); // Si ça échoue, on le supprime à la fin du programme
+            }
         }
     }
 
@@ -61,7 +64,7 @@ class ContactRepositoryTest {
         assertEquals("O'Connor-García !@#", contacts.get(0).getName(), "Les caractères spéciaux doivent être bien lus");
     }
 
-    // 4. Test de la recherche par ID (NOUVEAU)
+    // 4. Test de la recherche par ID 
     @Test
     void testFindById() {
         Contact contact = new Contact(3L, "Alice", "alice@test.com", "0612345678", "Amie");
@@ -71,7 +74,7 @@ class ContactRepositoryTest {
         assertFalse(repository.findById(99L).isPresent(), "On ne doit pas trouver l'ID 99");
     }
 
-    // 5. Test de la suppression (NOUVEAU)
+    // 5. Test de la suppression 
     @Test
     void testDelete() {
         Contact contact = new Contact(4L, "Bob", "bob@test.com", "0687654321", "Collègue");
@@ -83,7 +86,7 @@ class ContactRepositoryTest {
         assertTrue(contacts.isEmpty(), "La liste doit être vide après la suppression");
     }
 
-    // 6. Test de tous les Getters de l'entité Contact (NOUVEAU)
+    // 6. Test de tous les Getters de l'entité Contact
     @Test
     void testTousLesGetters() {
         Contact contact = new Contact(5L, "Charlie", "charlie@test.com", "0700000000", "Notes de test");
