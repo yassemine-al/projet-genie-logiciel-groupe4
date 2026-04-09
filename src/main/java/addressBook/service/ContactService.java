@@ -1,10 +1,12 @@
 package addressBook.service;
 
 import addressBook.entities.Contact;
+import addressBook.entities.Category;
 import addressBook.repository.ContactRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class ContactService {
     
@@ -14,8 +16,15 @@ public class ContactService {
         this.contactRepository = contactRepository;
     }
 
-    public Contact addContact(Long id, String name, String email, String phone, String notes) {
+    public Contact addContact(Long id, String name, String email, String phone, String notes, Set<Category> categories) {
         Contact contact = new Contact(id, name, email, phone, notes);
+        
+        if (categories != null) {
+            for (Category cat : categories) {
+                contact.addCategory(cat);
+            }
+        }
+        
         return contactRepository.save(contact);
     }
 
@@ -27,10 +36,9 @@ public class ContactService {
         return contactRepository.findById(id);
     }
 
-    // Cherche tous les contacts dont le nom contient la chaîne demandée (sans tenir compte des majuscules)
     public List<Contact> searchContactsByName(String name) {
         if (name == null || name.isBlank()) {
-            return List.of(); // Retourne une liste vide si la recherche est nulle ou vide
+            return List.of(); 
         }
         return contactRepository.findAll().stream()
                 .filter(c -> c.getName().toLowerCase().contains(name.toLowerCase()))
