@@ -1,6 +1,9 @@
-package adressBook.entités;
+package addressBook.entities;
 
 import org.junit.jupiter.api.Test;
+
+import addressBook.entities.SaleAgent;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class SaleAgentTest {

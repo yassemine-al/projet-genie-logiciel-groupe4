@@ -1,7 +1,8 @@
 package addressBook.service;
 
-import adressBook.entités.Contact;
+import addressBook.entities.Contact;
 import addressBook.repository.ContactRepository;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,8 +12,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
-//Active Mockito pour JUnit 5
-@ExtendWith(MockitoExtension.class) // Active Mockito pour JUnit 5
+
+@ExtendWith(MockitoExtension.class)
 class ContactServiceTest {
 
     @Mock
@@ -23,36 +24,30 @@ class ContactServiceTest {
 
     @Test
     void shouldCallSaveWhenAddingContact() {
-        // Arrange
         Contact fakeContact = new Contact(1L, "Kyachou", "kyachou@test.com", "0102", "Note");
         when(contactRepository.save(any(Contact.class))).thenReturn(fakeContact);
 
-        // Act
-        Contact result = contactService.addContact(1L, "Kyachou", "kyachou@test.com", "0102", "Note");
+        // Ajout du paramètre null à la fin
+        Contact result = contactService.addContact(1L, "Kyachou", "kyachou@test.com", "0102", "Note", null);
 
-        // Assert
         assertNotNull(result);
         assertEquals("Kyachou", result.getName());
-        // Vérification 
         verify(contactRepository, times(1)).save(any(Contact.class));
     }
 
     @Test
     void shouldThrowExceptionWhenNameIsEmpty() {
-        // Test d'un cas limite
         assertThrows(IllegalArgumentException.class, () -> {
-            contactService.addContact(1L, "", "email@test.com", "01", "Notes");
+            // Ajout du paramètre null à la fin
+            contactService.addContact(1L, "", "email@test.com", "01", "Notes", null);
         });
         
-        // Vérification 
         verify(contactRepository, never()).save(any());
     }
+
     @Test
     void testDeleteContact() {
-        // Act
         contactService.deleteContact(1L);
-
-        // Vérification 
         verify(contactRepository, times(1)).delete(1L);
     }
 }

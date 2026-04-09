@@ -2,7 +2,8 @@ package addressBook.repository;
 
 import java.util.List;
 import java.util.Optional;
-import adressBook.entités.Interaction;
+
+import addressBook.entities.Interaction;
 
 public interface InteractionRepository {
     Interaction save(Interaction interaction);

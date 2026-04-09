@@ -1,8 +1,9 @@
 package addressBook.repository;
 
-import adressBook.entités.Contact;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import addressBook.entities.Contact;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -10,13 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class MemoryContact implements ContactRepository {
+public class JsonContactRepository implements ContactRepository {
     
     private final String filePath;
     private final Gson gson;
 
     // Constructeur : on lui donne le nom du fichier dans lequel on veut sauvegarder
-    public MemoryContact(String filePath) {
+    public JsonContactRepository(String filePath) {
         this.filePath = filePath;
         this.gson = new Gson();
     }
@@ -33,7 +34,8 @@ public class MemoryContact implements ContactRepository {
             List<Contact> contacts = gson.fromJson(reader, listType);
             return contacts != null ? contacts : new ArrayList<>();
         } catch (IOException e) {
-            return new ArrayList<>();
+            // Vraie gestion d'erreur au lieu de renvoyer une liste vide en cachette
+            throw new RuntimeException("Erreur lors de la lecture du fichier JSON : " + filePath, e);
         }
     }
 
@@ -45,7 +47,8 @@ public class MemoryContact implements ContactRepository {
         try (Writer writer = new FileWriter(filePath)) {
             gson.toJson(contacts, writer);
         } catch (IOException e) {
-            e.printStackTrace();
+           
+            throw new RuntimeException("Impossible de sauvegarder le contact dans le fichier : " + filePath, e);
         }
         return contact;
     }
@@ -58,12 +61,16 @@ public class MemoryContact implements ContactRepository {
     @Override
     public void delete(Long id) {
         List<Contact> contacts = findAll();
-        contacts.removeIf(c -> c.getId().equals(id));
+        boolean isRemoved = contacts.removeIf(c -> c.getId().equals(id));
         
-        try (Writer writer = new FileWriter(filePath)) {
-            gson.toJson(contacts, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
+       
+        if (isRemoved) {
+            try (Writer writer = new FileWriter(filePath)) {
+                gson.toJson(contacts, writer);
+            } catch (IOException e) {
+        
+                throw new RuntimeException("Impossible de mettre à jour le fichier après suppression : " + filePath, e);
+            }
         }
     }
 }
