@@ -23,8 +23,9 @@ public class Contact {
         this.notes = notes;
     }
 
+    // --- LA COPIE DÉFENSIVE EST LÀ ! ---
     public Set<Category> getCategories() { 
-        return categories; 
+        return new HashSet<>(this.categories); // On renvoie une copie sécurisée !
     }
 
     public void addCategory(Category category) {
