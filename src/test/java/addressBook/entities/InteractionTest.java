@@ -16,7 +16,7 @@ class InteractionTest {
     @Test
     void testExceptionsSetters() {
      
-        Interaction inter = new Interaction(1L, new Date(), "Valide", null); 
+    	Interaction inter = new Interaction(1L, new Date(), "Valide", TypeInteraction.APPEL);
         
   
         assertThrows(IllegalArgumentException.class, () -> inter.setDate(null));
