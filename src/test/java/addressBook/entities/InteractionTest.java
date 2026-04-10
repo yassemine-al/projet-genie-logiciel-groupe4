@@ -8,8 +8,10 @@ class InteractionTest {
 
     @Test
     void testExceptionsConstructeur() {
-        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, null, "Test", null), "Doit bloquer une date nulle");
-        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, new Date(), "", null), "Doit bloquer un résumé vide");
+        
+        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, null, "Test", TypeInteraction.APPEL), "Doit bloquer une date nulle");
+        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, new Date(), "", TypeInteraction.APPEL), "Doit bloquer un résumé vide");
+        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, new Date(), null, TypeInteraction.APPEL), "Doit bloquer un résumé null");
         assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, new Date(), "Test", null), "Doit bloquer un type nul");
     }
 
@@ -19,6 +21,7 @@ class InteractionTest {
         
         assertThrows(IllegalArgumentException.class, () -> inter.setDate(null));
         assertThrows(IllegalArgumentException.class, () -> inter.setSummary(""));
+        assertThrows(IllegalArgumentException.class, () -> inter.setSummary(null)); 
         assertThrows(IllegalArgumentException.class, () -> inter.setType(null));
     }
 
@@ -31,19 +34,16 @@ class InteractionTest {
         assertNotEquals(dateInitiale.getTime(), inter.getDate().getTime(), "La copie défensive a échoué !");
     }
 
-    
     @Test
     void testGettersEtSettersValides() {
         Date date = new Date(100000L);
         Interaction inter = new Interaction(1L, date, "Mon résumé", TypeInteraction.APPEL);
 
-        // On lit les valeurs 
         assertEquals(1L, inter.getId());
         assertEquals("Mon résumé", inter.getSummary());
         assertEquals(TypeInteraction.APPEL, inter.getType());
         assertNotNull(inter.getDate());
 
-        // On modifie avec des valeurs valides 
         inter.setId(99L);
         inter.setSummary("Résumé modifié");
         
