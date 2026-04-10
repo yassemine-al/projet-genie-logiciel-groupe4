@@ -8,11 +8,10 @@ class InteractionTest {
 
     @Test
     void testExceptionsConstructeur() {
-        
-        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, null, "Test", TypeInteraction.APPEL), "Doit bloquer une date nulle");
-        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, new Date(), "", TypeInteraction.APPEL), "Doit bloquer un résumé vide");
-        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, new Date(), null, TypeInteraction.APPEL), "Doit bloquer un résumé null");
-        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, new Date(), "Test", null), "Doit bloquer un type nul");
+        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, null, "Test", TypeInteraction.APPEL));
+        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, new Date(), "", TypeInteraction.APPEL));
+        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, new Date(), null, TypeInteraction.APPEL));
+        assertThrows(IllegalArgumentException.class, () -> new Interaction(1L, new Date(), "Test", null));
     }
 
     @Test
@@ -21,7 +20,7 @@ class InteractionTest {
         
         assertThrows(IllegalArgumentException.class, () -> inter.setDate(null));
         assertThrows(IllegalArgumentException.class, () -> inter.setSummary(""));
-        assertThrows(IllegalArgumentException.class, () -> inter.setSummary(null)); 
+        assertThrows(IllegalArgumentException.class, () -> inter.setSummary(null));
         assertThrows(IllegalArgumentException.class, () -> inter.setType(null));
     }
 
@@ -29,9 +28,8 @@ class InteractionTest {
     void testCopieDefensiveDate() {
         Date dateInitiale = new Date(100000L);
         Interaction inter = new Interaction(1L, dateInitiale, "Copie Défensive", TypeInteraction.APPEL);
-        
         dateInitiale.setTime(999999999L);
-        assertNotEquals(dateInitiale.getTime(), inter.getDate().getTime(), "La copie défensive a échoué !");
+        assertNotEquals(dateInitiale.getTime(), inter.getDate().getTime());
     }
 
     @Test
@@ -44,10 +42,16 @@ class InteractionTest {
         assertEquals(TypeInteraction.APPEL, inter.getType());
         assertNotNull(inter.getDate());
 
+  
         inter.setId(99L);
         inter.setSummary("Résumé modifié");
+        Date nouvelleDate = new Date(200000L);
+        inter.setDate(nouvelleDate);
+        inter.setType(TypeInteraction.REUNION); 
         
         assertEquals(99L, inter.getId());
         assertEquals("Résumé modifié", inter.getSummary());
+        assertEquals(nouvelleDate.getTime(), inter.getDate().getTime());
+        assertEquals(TypeInteraction.REUNION, inter.getType());
     }
 }
