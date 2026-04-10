@@ -25,10 +25,29 @@ class InteractionTest {
     @Test
     void testCopieDefensiveDate() {
         Date dateInitiale = new Date(100000L);
-       
         Interaction inter = new Interaction(1L, dateInitiale, "Copie Défensive", TypeInteraction.APPEL);
         
         dateInitiale.setTime(999999999L);
         assertNotEquals(dateInitiale.getTime(), inter.getDate().getTime(), "La copie défensive a échoué !");
+    }
+
+    
+    @Test
+    void testGettersEtSettersValides() {
+        Date date = new Date(100000L);
+        Interaction inter = new Interaction(1L, date, "Mon résumé", TypeInteraction.APPEL);
+
+        // On lit les valeurs 
+        assertEquals(1L, inter.getId());
+        assertEquals("Mon résumé", inter.getSummary());
+        assertEquals(TypeInteraction.APPEL, inter.getType());
+        assertNotNull(inter.getDate());
+
+        // On modifie avec des valeurs valides 
+        inter.setId(99L);
+        inter.setSummary("Résumé modifié");
+        
+        assertEquals(99L, inter.getId());
+        assertEquals("Résumé modifié", inter.getSummary());
     }
 }
