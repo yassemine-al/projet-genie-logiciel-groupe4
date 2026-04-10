@@ -15,10 +15,8 @@ class InteractionTest {
 
     @Test
     void testExceptionsSetters() {
-     
-    	Interaction inter = new Interaction(1L, new Date(), "Valide", TypeInteraction.APPEL);
+        Interaction inter = new Interaction(1L, new Date(), "Valide", TypeInteraction.APPEL);
         
-  
         assertThrows(IllegalArgumentException.class, () -> inter.setDate(null));
         assertThrows(IllegalArgumentException.class, () -> inter.setSummary(""));
         assertThrows(IllegalArgumentException.class, () -> inter.setType(null));
@@ -27,7 +25,8 @@ class InteractionTest {
     @Test
     void testCopieDefensiveDate() {
         Date dateInitiale = new Date(100000L);
-        Interaction inter = new Interaction(1L, dateInitiale, "Copie Défensive", null);
+       
+        Interaction inter = new Interaction(1L, dateInitiale, "Copie Défensive", TypeInteraction.APPEL);
         
         dateInitiale.setTime(999999999L);
         assertNotEquals(dateInitiale.getTime(), inter.getDate().getTime(), "La copie défensive a échoué !");
