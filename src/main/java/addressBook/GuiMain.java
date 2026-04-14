@@ -15,7 +15,6 @@ import java.util.Set;
 public class GuiMain {
     public static void main(String[] args) {
         
-        
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
             
@@ -43,7 +42,6 @@ public class GuiMain {
             fenetre.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             fenetre.setLocationRelativeTo(null); // Centre la fenêtre sur l'écran
 
-
             JTabbedPane onglets = new JTabbedPane();
             onglets.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -57,7 +55,7 @@ public class GuiMain {
         });
     }
 
- // =========================================================================
+    // =========================================================================
     // MODULE CONTACTS (Version avec Tableau)
     // =========================================================================
     private static JPanel creerOngletContacts(ContactService service) {
@@ -83,26 +81,76 @@ public class GuiMain {
         
         JScrollPane scrollPane = new JScrollPane(tableContacts);
 
-        // --- 2. BOUTON RAFRAÎCHIR ---
-        JButton boutonCharger = new JButton("🔄 Rafraîchir la liste des contacts");
-        boutonCharger.putClientProperty("JButton.buttonType", "default");
-        boutonCharger.addActionListener(e -> {
-            // On vide le tableau avant de le remplir
-            modeleTable.setRowCount(0); 
+// --- 2. BARRE D'OUTILS (Recherche, Rafraîchir, Supprimer) ---
+        
+        // a) La barre de Recherche
+        JTextField champRecherche = new JTextField(15);
+        champRecherche.putClientProperty("JTextField.placeholderText", "Entrez un nom...");
+        JButton btnChercher = new JButton("🔍 Chercher");
+        
+        btnChercher.addActionListener(e -> {
+            String recherche = champRecherche.getText().trim().toLowerCase();
+            modeleTable.setRowCount(0); // On vide le tableau
             
+            // On récupère les contacts et on les filtre
+  
             List<Contact> contacts = service.getAllContacts();
             for (Contact c : contacts) {
-                // On prépare une ligne avec les infos du contact
-                Object[] ligne = {
-                    c.getId(),
-                    c.getName(),
-                    c.getEmail() != null ? c.getEmail() : "",
-                    c.getCategories().toString()
-                };
-                // On ajoute la ligne au tableau
-                modeleTable.addRow(ligne);
+                if (recherche.isEmpty() || c.getName().toLowerCase().contains(recherche)) {
+                    Object[] ligne = {
+                        c.getId(),
+                        c.getName(),
+                        c.getEmail() != null ? c.getEmail() : "",
+                        c.getCategories().toString()
+                    };
+                    modeleTable.addRow(ligne);
+                }
             }
         });
+
+        // b) Le bouton Rafraîchir (qui réinitialise aussi la recherche)
+        JButton boutonCharger = new JButton("🔄 Tout afficher");
+        boutonCharger.putClientProperty("JButton.buttonType", "default");
+        boutonCharger.addActionListener(e -> {
+            champRecherche.setText(""); 
+            btnChercher.doClick();      
+        });
+
+        // c) Le bouton Supprimer
+        JButton btnSupprimer = new JButton("🗑️ Supprimer le contact sélectionné");
+        btnSupprimer.setBackground(new Color(255, 100, 100)); // Petit fond rouge
+        btnSupprimer.setForeground(Color.WHITE);
+        btnSupprimer.addActionListener(e -> {
+            int selectedRow = tableContacts.getSelectedRow(); 
+            
+            if (selectedRow >= 0) {
+                int confirmation = JOptionPane.showConfirmDialog(
+                    null, 
+                    "Voulez-vous vraiment supprimer ce contact ?", 
+                    "Confirmation de suppression", 
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+
+                if (confirmation == JOptionPane.YES_OPTION) {
+                    Long contactId = (Long) tableContacts.getValueAt(selectedRow, 0);
+                    service.deleteContact(contactId);
+                    JOptionPane.showMessageDialog(null, "Le contact a été supprimé avec succès.");
+                    boutonCharger.doClick(); // Rafraîchit le tableau
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Veuillez d'abord sélectionner un contact dans la liste.", "Erreur", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+
+        // --- ASSEMBLAGE DU PANNEAU HAUT ---
+        JPanel panneauHaut = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        panneauHaut.add(new JLabel("Rechercher :"));
+        panneauHaut.add(champRecherche);
+        panneauHaut.add(btnChercher);
+        panneauHaut.add(new JLabel("  |  ")); // Petit séparateur visuel
+        panneauHaut.add(boutonCharger);
+        panneauHaut.add(btnSupprimer);
 
         // --- 3. FORMULAIRE D'AJOUT ---
         JPanel formulaire = new JPanel(new GridLayout(4, 1, 10, 10));
@@ -154,9 +202,9 @@ public class GuiMain {
         formulaire.add(ligne1); formulaire.add(ligne2); formulaire.add(ligne3); formulaire.add(boutonAjouter);
         
         // --- 4. ASSEMBLAGE ---
-        panneau.add(boutonCharger, BorderLayout.NORTH);
-        panneau.add(scrollPane, BorderLayout.CENTER);
-        panneau.add(formulaire, BorderLayout.SOUTH);
+        panneau.add(panneauHaut, BorderLayout.NORTH); // Les boutons en haut
+        panneau.add(scrollPane, BorderLayout.CENTER); // Le tableau au milieu
+        panneau.add(formulaire, BorderLayout.SOUTH);  // Le formulaire en bas
 
         // On lance un chargement initial pour afficher les données dès l'ouverture
         boutonCharger.doClick();
@@ -164,7 +212,7 @@ public class GuiMain {
         return panneau;
     }
 
- // =========================================================================
+    // =========================================================================
     // MODULE INTERACTIONS (Version avec Tableau et erreurs propres)
     // =========================================================================
     private static JPanel creerOngletInteractions(InteractionService service) {
@@ -228,13 +276,11 @@ public class GuiMain {
             String resumeTexte = champResume.getText().trim();
 
             if (idTexte.isEmpty() || resumeTexte.isEmpty()) {
-                // Avertissement propre sans panique (icône jaune)
                 JOptionPane.showMessageDialog(null, "Veuillez remplir l'ID et le Résumé avant d'enregistrer.", "Champs manquants", JOptionPane.WARNING_MESSAGE);
-                return; // On arrête l'exécution de la méthode ici
+                return; 
             }
 
             try {
-                // Si on arrive ici, c'est que les champs ne sont pas vides
                 Long id = Long.parseLong(idTexte); 
                 
                 Interaction inter = new Interaction(
@@ -248,14 +294,11 @@ public class GuiMain {
                 JOptionPane.showMessageDialog(null, "Interaction ajoutée avec succès !", "Succès", JOptionPane.INFORMATION_MESSAGE);
                 champId.setText(""); champResume.setText("");
                 
-                // Rafraîchissement auto du tableau
                 boutonCharger.doClick(); 
                 
             } catch (NumberFormatException ex) {
-                // Si l'utilisateur a tapé "ABC" au lieu de "1" dans l'ID
                 JOptionPane.showMessageDialog(null, "L'ID doit être un nombre valide (ex: 1, 2, 3...).", "Erreur de format", JOptionPane.ERROR_MESSAGE);
             } catch (IllegalArgumentException ex) {
-                // Si le constructeur de Interaction râle (ce qu'on a codé à la mission 3 !)
                 JOptionPane.showMessageDialog(null, ex.getMessage(), "Erreur métier", JOptionPane.ERROR_MESSAGE);
             }
         });
@@ -267,7 +310,7 @@ public class GuiMain {
         panneau.add(scrollPane, BorderLayout.CENTER);
         panneau.add(formulaire, BorderLayout.SOUTH);
 
-        // Chargement initial automatique
+  
         boutonCharger.doClick();
 
         return panneau;
