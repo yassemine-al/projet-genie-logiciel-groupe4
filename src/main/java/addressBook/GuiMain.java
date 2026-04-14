@@ -81,7 +81,7 @@ public class GuiMain {
      * Menu pour choisir un agent existant ou en créer un nouveau
      */
     private static void ouvrirMenuAgents(JFrame parent, String[] args) {
-        String[] options = {"Se connecter (Existant)", "Créer un nouvel Agent", "Annuler"};
+        String[] options = {"Se connecter ", "Créer un nouvel Agent", "Annuler"};
         int choix = JOptionPane.showOptionDialog(parent, 
             "Que souhaitez-vous faire ?", "Gestion des Agents",
             JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
@@ -146,16 +146,43 @@ public class GuiMain {
 
         // Formulaire d'ajout
         JPanel form = new JPanel(new FlowLayout());
-        JTextField fId = new JTextField(3); JTextField fNom = new JTextField(10);
+        JTextField fId = new JTextField(3); 
+        JTextField fNom = new JTextField(10);
+        JTextField fEmail = new JTextField(10);
+        JComboBox<Category> comboCat = new JComboBox<>(Category.values());
         JButton btnAdd = new JButton("Ajouter Contact");
         btnAdd.addActionListener(e -> {
             try {
-                service.addContact(Long.parseLong(fId.getText()), fNom.getText(), "test@mail.com", "000", "", new HashSet<>(), agentSession.getId());
+                Long id = Long.parseLong(fId.getText());
+                if (service.getContactById(id).isPresent()) {
+                    JOptionPane.showMessageDialog(null, "Erreur : L'ID " + id + " est déjà utilisé !");
+                    return; 
+                }
+                String nom = fNom.getText();
+                String email = fEmail.getText();
+                Category selectedCat = (Category) comboCat.getSelectedItem();
+                Set<Category> categories = new HashSet<>();
+                if (selectedCat != null) categories.add(selectedCat);
+                service.addContact(id, nom, email, "000", "", categories, agentSession.getId());
+                
                 rafraichir.run();
-            } catch (Exception ex) { JOptionPane.showMessageDialog(null, ex.getMessage()); }
+  
+                fId.setText("");
+                fNom.setText("");
+                fEmail.setText("");
+            } catch (Exception ex) { 
+                JOptionPane.showMessageDialog(null, "Erreur : " + ex.getMessage()); 
+            }
         });
-        form.add(new JLabel("ID:")); form.add(fId); form.add(new JLabel("Nom:")); form.add(fNom); form.add(btnAdd);
-
+        form.add(new JLabel("ID:"));
+        form.add(fId);
+        form.add(new JLabel("Nom:"));
+        form.add(fNom);
+        form.add(new JLabel("Email:")); 
+        form.add(fEmail);
+        form.add(new JLabel("Catégorie:")); 
+        form.add(comboCat);
+        form.add(btnAdd);
         panneau.add(new JScrollPane(table), BorderLayout.CENTER);
         panneau.add(form, BorderLayout.SOUTH);
         rafraichir.run();
@@ -165,23 +192,50 @@ public class GuiMain {
     private static JPanel creerOngletInteractions(InteractionService service, ContactService contactService) {
         JPanel panneau = new JPanel(new BorderLayout(10, 10));
         panneau.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        DefaultTableModel modele = new DefaultTableModel(new String[]{"ID", "Résumé"}, 0);
+        DefaultTableModel modele = new DefaultTableModel(new String[]{"ID", "Date/Heure", "Contact", "Résumé"}, 0);
         JTable table = new JTable(modele);
+        
+        JPanel pSaisie = new JPanel(new FlowLayout());
         
         JComboBox<String> combo = new JComboBox<>();
         contactService.getContactsByAgent(agentSession.getId()).forEach(c -> combo.addItem(c.getName()));
 
+        JTextField fResume = new JTextField(15); 
         JButton btn = new JButton("Enregistrer Interaction");
+
         btn.addActionListener(e -> {
-            if(combo.getSelectedItem() == null) return;
-            Interaction i = new Interaction((long)(Math.random()*1000), new Date(), "Echange avec " + combo.getSelectedItem(), TypeInteraction.APPEL);
+            if(combo.getSelectedItem() == null) {
+                JOptionPane.showMessageDialog(panneau, "Veuillez choisir un contact.");
+                return;
+            }
+
+            // Création automatique de l'ID 
+            Long idAuto = System.currentTimeMillis() % 100000; 
+            
+            Date dateActuelle = new Date(); 
+            String contactNom = (String) combo.getSelectedItem();
+            String note = fResume.getText().isEmpty() ? "Échange standard" : fResume.getText();
+            Interaction i = new Interaction(idAuto, dateActuelle,  contactNom + ": " + note, TypeInteraction.APPEL);
+            
             service.saveInteraction(i);
-            modele.addRow(new Object[]{i.getId(), i.getSummary()});
+            modele.addRow(new Object[]{
+                i.getId(), 
+                dateActuelle.toString(),
+                contactNom, 
+                i.getSummary()
+            });
+            
+            fResume.setText(""); 
         });
+        pSaisie.add(new JLabel("Contact :"));
+        pSaisie.add(combo);
+        pSaisie.add(new JLabel("Note :"));
+        pSaisie.add(fResume);
+        pSaisie.add(btn);
 
         panneau.add(new JScrollPane(table), BorderLayout.CENTER);
-        JPanel p = new JPanel(); p.add(new JLabel("Contact :")); p.add(combo); p.add(btn);
-        panneau.add(p, BorderLayout.SOUTH);
+        panneau.add(pSaisie, BorderLayout.SOUTH);
+        
         return panneau;
     }
 }
